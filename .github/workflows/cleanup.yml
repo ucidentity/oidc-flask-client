@@ -1,0 +1,44 @@
+---
+
+    name: Cleanup old images published to ghcr
+    
+    on:
+      schedule:
+        - cron:  '0 21 * * *'
+      workflow_dispatch:
+    env:
+      IMAGE_NAME: "oidc-flask-client"
+      SUCCESS_ICON: ":white_check_mark:"
+      ERROR_ICON: ":exclamation:"
+      INFO_ICON: ":information_source:"
+    
+    jobs:
+      cleanup_old_images:
+        runs-on: ubuntu-latest
+    
+        steps:
+          - name: cleanup old images
+            id: cleanup
+            uses: snok/container-retention-policy@482ce28159f65a8bfad986da1fedcef40169aa75
+            with:
+              image-names: ${{ env.IMAGE_NAME }}
+              cut-off: "5 minutes ago UTC"
+              timestamp-to-use: updated_at
+              account-type: org
+              org-name: ucidentity
+              keep-at-least: 3
+              skip-tags: latest
+              token: ${{ secrets.CALNET_AUTOMATION_PACKAGE_DELETE }}
+              
+          - name: Send Slack message if images have been deleted
+            id: slack
+            uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
+            with:
+              payload: |
+                {
+                  "message": "${{ env.INFO_ICON }} Old images have been deleted\n\n${{ steps.cleanup.outputs.deleted }}"
+                }
+            env:
+              SLACK_WEBHOOK_URL: ${{ secrets.CALNET_SLACK_GHA_WEBHOOK_URL }}
+            if: steps.cleanup.outputs.deleted != ''
+    

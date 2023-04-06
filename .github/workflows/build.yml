@@ -1,0 +1,89 @@
+name: Create and publish container image
+
+on:
+  push:
+    tags:
+      - 'v**'
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+
+  environment:
+    runs-on: ubuntu-latest
+
+    outputs:
+      run-url: ${{ steps.get-run-url.outputs.run-url }}
+      package-url: ${{ steps.get-package-url.outputs.package-url }}
+
+    steps:
+
+      - name: Get run URL
+        id: get-run-url
+        run: echo "run-url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >> $GITHUB_OUTPUT
+
+      - name: Get package URL
+        id: get-package-url
+        run: echo "package-url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/pkgs/container/${{ env.IMAGE_NAME }}" >> $GITHUB_OUTPUT
+
+  publish:
+    needs:
+      - environment
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for container
+        id: meta
+        uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+        with:
+          images: ${{ env.REGISTRY }}/ucidentity/${{ env.IMAGE_NAME }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tags:
+              type=semver,pattern={{version}}
+              type=semver,pattern={{major}}.{{minor}}
+
+
+      - name: Build and push container image
+        uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Send publish success report to Slack
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
+        with:
+          payload: |
+              {
+              "message": "${{ env.SUCCESS_ICON }} CAS container published successfully.\n\n${{ needs.environment.outputs.package-url }}"
+              }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CALNET_SLACK_GHA_WEBHOOK_URL }}
+        if: success()
+
+      - name: Send publish failure report to Slack
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844
+        with:
+          payload: |
+              {
+              "message": "${{ env.ERROR_ICON }} CAS container publishing failed."
+              }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CALNET_SLACK_GHA_WEBHOOK_URL }}
+        if: failure()

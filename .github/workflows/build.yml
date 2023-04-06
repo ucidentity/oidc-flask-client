@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: oidc-flask-client
   SUCCESS_ICON: ":white_check_mark:"
   ERROR_ICON: ":exclamation:"
   INFO_ICON: ":information_source:"

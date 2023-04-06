@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+
+  cas-host:
+    container_name: oidc-client
+    build:
+      context: .
+      dockerfile: Dockerfile
+    labels:
+      - cas-testing
+    environment:
+      - SSL_CERT_FILE=/rootCA.pem
+      - REQUESTS_CA_BUNDLE=/rootCA.pem
+    networks: 
+      - cas-test
+    volumes:
+     - ${PWD}/settings.cfg:/settings.cfg
+     - ${CERT_PATH}:/rootCA.pem
+    ports:
+     - "5000:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "http://oidc-client:5000"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  cas-test:
+    name: cas-test

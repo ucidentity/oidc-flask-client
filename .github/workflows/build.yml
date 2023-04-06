@@ -8,6 +8,9 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  SUCCESS_ICON: ":white_check_mark:"
+  ERROR_ICON: ":exclamation:"
+  INFO_ICON: ":information_source:"
 
 jobs:
 
@@ -71,7 +74,7 @@ jobs:
         with:
           payload: |
               {
-              "message": "${{ env.SUCCESS_ICON }} CAS container published successfully.\n\n${{ needs.environment.outputs.package-url }}"
+              "message": "${{ env.SUCCESS_ICON }} ${{ env.IMAGE_NAME }} container published successfully.\n\n${{ needs.environment.outputs.package-url }}"
               }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.CALNET_SLACK_GHA_WEBHOOK_URL }}
@@ -82,7 +85,7 @@ jobs:
         with:
           payload: |
               {
-              "message": "${{ env.ERROR_ICON }} CAS container publishing failed."
+              "message": "${{ env.ERROR_ICON }} ${{ env.IMAGE_NAME }} container publishing failed."
               }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.CALNET_SLACK_GHA_WEBHOOK_URL }}

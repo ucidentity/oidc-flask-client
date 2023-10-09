@@ -1,4 +1,4 @@
-FROM python:3.11.5-slim
+FROM python:3.12.0-slim
 
 RUN apt-get update && apt-get -y upgrade \
     && apt-get install -y curl

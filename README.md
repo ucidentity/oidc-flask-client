@@ -1,6 +1,7 @@
 # oidc-flask-client
 
 Example OIDC RP using https://github.com/zamzterz/Flask-pyoidc
+This example is not intended for use in production.
 
 ## Testing
 

@@ -19,16 +19,15 @@
         steps:
           - name: cleanup old images
             id: cleanup
-            uses: snok/container-retention-policy@482ce28159f65a8bfad986da1fedcef40169aa75
+            uses: snok/container-retention-policy@4f22ef80902ad409ed55a99dc5133cc1250a0d03
             with:
               image-names: ${{ env.IMAGE_NAME }}
-              cut-off: "5 minutes ago UTC"
+              cut-off: "5m"
               timestamp-to-use: updated_at
-              account-type: org
-              org-name: ucidentity
-              keep-at-least: 3
-              skip-tags: latest
-              token: ${{ secrets.CALNET_AUTOMATION_PACKAGE_DELETE }}
+              account: ucidentity
+              keep-n-most-recent: 3
+              image-tags: "!latest"
+              token: ${{ secrets.GITHUB_TOKEN }}
               
           - name: Send Slack message if images have been deleted
             id: slack
